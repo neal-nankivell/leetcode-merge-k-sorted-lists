@@ -1,4 +1,6 @@
-﻿namespace Answer
+﻿using System.Collections.Generic;
+
+namespace Answer
 {
     /*
     Merge k sorted linked lists and return it as one sorted list.
@@ -11,7 +13,8 @@
             ListNode result = null;
             ListNode last = null;
 
-            ListNode min = PopMin(lists);
+            var minHeap = new MinHeap(lists);
+            ListNode min = minHeap.PopMin();
             while (min != null)
             {
                 if (result == null)
@@ -25,35 +28,123 @@
                     last = min;
                     last.next = null;
                 }
-                min = PopMin(lists);
+                min = minHeap.PopMin();
             }
 
             return result;
         }
 
-        private ListNode PopMin(ListNode[] lists)
+        private class MinHeap
         {
-            int? minIndex = null;
-
-            for (int i = 0; i < lists.Length; i++)
+            private List<ListNode> _minheap = new List<ListNode>();
+            public MinHeap(ListNode[] lists)
             {
-                if (lists[i] == null)
+                foreach (ListNode node in lists)
                 {
-                    continue;
-                }
-                if (!minIndex.HasValue || lists[i].val < lists[minIndex.Value].val)
-                {
-                    minIndex = i;
+                    if (node != null)
+                    {
+                        Add(node);
+                    }
                 }
             }
 
-            if (minIndex.HasValue)
+            private void Add(ListNode node)
             {
-                var minNode = lists[minIndex.Value];
-                lists[minIndex.Value] = minNode?.next;
-                return minNode;
+                if (_minheap.Count == 0)
+                {
+                    _minheap.Add(node);
+                }
+                else
+                {
+                    var index = _minheap.Count;
+                    _minheap.Add(node);
+                    var parentIndex = GetParentIndex(index);
+
+                    while (parentIndex != null)
+                    {
+                        if (_minheap[parentIndex.Value].val > _minheap[index].val)
+                        {
+                            Swap(index, parentIndex.Value);
+                            index = parentIndex.Value;
+                            parentIndex = GetParentIndex(index);
+                        }
+                        else
+                        {
+                            break;
+                        }
+                    }
+                }
             }
-            return null;
+
+            public ListNode PopMin()
+            {
+                if (_minheap.Count == 0)
+                {
+                    return null;
+                }
+                var min = _minheap[0];
+
+                if (min.next != null)
+                {
+                    _minheap[0] = min.next;
+                }
+                else if (_minheap.Count == 1)
+                {
+                    _minheap.Clear();
+                }
+                else
+                {
+                    var temp = _minheap[_minheap.Count - 1];
+                    _minheap.RemoveAt(_minheap.Count - 1);
+                    _minheap[0] = temp;
+                }
+
+                if (_minheap.Count > 1)
+                {
+                    (int, int) GetChildIndexes(int parentIndex) =>
+                        ((parentIndex * 2) + 1, (parentIndex * 2) + 2);
+
+                    (int?, int?) GetChildValues(int parentIndex)
+                    {
+                        (int a, int b) = GetChildIndexes(parentIndex);
+                        return (
+                            a < _minheap.Count ? _minheap[a].val : (int?)null,
+                            b < _minheap.Count ? _minheap[b].val : (int?)null
+                        );
+                    };
+
+                    var indexToBubbleDown = 0;
+                    var valueToBubbleDown = _minheap[indexToBubbleDown].val;
+
+                    (int leftChildIndex, int rightChildIndex) = GetChildIndexes(indexToBubbleDown);
+                    (int? leftVal, int? rightVal) = GetChildValues(indexToBubbleDown);
+
+                    while (leftVal.HasValue && leftVal < valueToBubbleDown ||
+                        rightVal.HasValue && rightVal < valueToBubbleDown)
+                    {
+                        int indexToSwap = rightVal.HasValue && rightVal < leftVal ?
+                            rightChildIndex : leftChildIndex;
+
+                        Swap(indexToSwap, indexToBubbleDown);
+                        indexToBubbleDown = indexToSwap;
+
+                        (leftChildIndex, rightChildIndex) = GetChildIndexes(indexToBubbleDown);
+                        (leftVal, rightVal) = GetChildValues(indexToBubbleDown);
+                    }
+                }
+
+                return min;
+            }
+
+            private void Swap(int indexA, int indexB)
+            {
+                var temp = _minheap[indexA];
+                _minheap[indexA] = _minheap[indexB];
+                _minheap[indexB] = temp;
+            }
+
+            private int? GetParentIndex(int index) =>
+                index == 0 ? (int?)null : (index - 1) / 2;
         }
     }
 }

@@ -13,6 +13,18 @@ namespace Tests
             new[] { 2, 6 },
             ExpectedResult = new[] { 1, 1, 2, 3, 4, 4, 5, 6 }
         )]
+        [TestCase(
+            ExpectedResult = new int[0]
+        )]
+        [TestCase(
+            new int[0],
+            ExpectedResult = new int[0]
+        )]
+        [TestCase(
+            new int[0],
+            new int[] { 1 },
+            ExpectedResult = new int[] { 1 }
+        )]
         public int[] MergeKLists(params int[][] lists)
         {
             var sut = new Solution();
